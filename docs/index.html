@@ -73,7 +73,7 @@
 				opacity:1.0,
 				depthTest:false,
 				depthWrite:false,
-				side: THREE.DoubleSide,
+				side:THREE.DoubleSide,
 			});
 			
 			const camera = new THREE.PerspectiveCamera(60,window.innerWidth / window.innerHeight,0.01,1000.0);
@@ -117,7 +117,7 @@
 				
 				pos = new THREE.Vector3(0,0,z-offset);
 				pos.applyMatrix4(viewMatrix);
-				vec = new THREE.Vector3(-pos.x,-pos.y,pos.z);
+				vec = new THREE.Vector3(pos.x,pos.y,pos.z);
 				distance = pos.dot(vec);
 				material.uniforms.uFar.value = [-vec.x,-vec.y,-vec.z,distance];
 
