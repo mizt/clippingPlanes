@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title></title>
+		<meta charset="utf-8">
+		<meta name="robots" content="noindex, nofollow">
+		<link rel="icon" href="data:;base64,=">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			
+			* {
+				margin:0;
+				padding:0;
+				-webkit-user-select:none;
+				-moz-user-select:none;
+				-ms-user-select:none;
+			}
+			
+			body {
+				background:#000;
+				height:100dvh;
+				overflow:hidden;
+			}
+			
+		</style>
+	</head>
+	<body>
+		<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+		<script type="importmap">
+			{
+				"imports": {
+					"three":"https://unpkg.com/three@0.156.0/build/three.module.js",
+					"three/addons/":"https://unpkg.com/three@0.156.0/examples/jsm/"
+				}
+			}
+		</script>
+		<script type="module">
+			
+			import * as THREE from "three";
+		
+			const material = new THREE.ShaderMaterial({
+				uniforms: {
+					uNear:[0,0,0,0],
+				},
+				vertexShader:`
+					varying vec2 vUv;
+					varying vec3 vViewPosition;
+					void main() {
+						vUv = uv;
+						vec4 mvPosition = modelViewMatrix*vec4(position,1.0);
+						vViewPosition = -mvPosition.xyz;
+						gl_Position = projectionMatrix*mvPosition;
+					}`,
+				fragmentShader:`
+					varying vec2 vUv;
+					varying vec3 vViewPosition;
+					uniform vec4 uNear;
+					void main() {
+						bool clipped = false;
+						if(dot(vViewPosition,uNear.xyz)>uNear.w) clipped = true;
+						if(clipped) {
+							discard;
+						}
+						else {
+							gl_FragColor = vec4(1.0,1.0,1.0,0.5);
+						}
+					
+					}`,
+				transparent:true,
+				opacity:1.0,
+				depthTest:false,
+				depthWrite:false,
+				side: THREE.DoubleSide,
+			});
+			
+			const camera = new THREE.PerspectiveCamera(60,window.innerWidth / window.innerHeight,0.01,1000.0);
+			camera.position.set(0.0,0.0,0.0);
+			
+			const scene = new THREE.Scene();
+			scene.add(new THREE.AmbientLight(0xFFFFFF));
+		
+			const geometry = new THREE.BoxGeometry(1,1,1,8,8);
+			const box = new THREE.Mesh(geometry,material);
+			scene.add(box);
+			
+			const renderer = new THREE.WebGLRenderer();
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.setPixelRatio(1);
+			document.body.appendChild(renderer.domElement);
+			
+			renderer.localClippingEnabled = true;
+			
+			let theta = 0;
+			
+			setInterval(()=>{
+								
+				if(!(window.innerWidth===renderer.domElement.width&&window.innerHeight===renderer.domElement.height)) {
+					camera.aspect = window.innerWidth/window.innerHeight;
+					camera.updateProjectionMatrix();
+					renderer.setSize(window.innerWidth,window.innerHeight);
+				}
+				
+				let Z = -3.0+Math.cos(theta)*0.5;
+				
+				let pos = new THREE.Vector3(0,0,Z+0.25);
+				let viewMatrix = camera.matrixWorldInverse;
+				pos.applyMatrix4(viewMatrix);
+				let vec = new THREE.Vector3(-pos.x,-pos.y,-pos.z);
+				let distance = pos.dot(vec);
+				material.uniforms.uNear.value = [-vec.x,-vec.y,-vec.z,distance];
+				
+				box.position.z = Z;
+				box.rotation.y = theta*2.0;
+				box.rotation.x = theta*3.0;
+
+				renderer.render(scene,camera);
+				
+				theta+=0.01;
+				
+			},33);
+			
+		</script>
+	</body>
+</html>
