@@ -105,19 +105,22 @@
 				}
 				
 				const z = -3.0+Math.cos(theta)*0.5;
-				const offset = 0.125;
-
+				const offset = [
+					0.25,
+					1.0
+				];
+				
 				const viewMatrix = camera.matrixWorldInverse;
-
-				let pos = new THREE.Vector3(0,0,z+offset);
+				
+				let pos = new THREE.Vector3(0,0,z+offset[0]);
 				pos.applyMatrix4(viewMatrix);
 				let vec = new THREE.Vector3(-pos.x,-pos.y,-pos.z);
 				let distance = pos.dot(vec);
 				material.uniforms.uNear.value = [-vec.x,-vec.y,-vec.z,distance];
 				
-				pos = new THREE.Vector3(0,0,z-offset);
+				pos = new THREE.Vector3(0,0,z-offset[1]);
 				pos.applyMatrix4(viewMatrix);
-				vec = new THREE.Vector3(pos.x,pos.y,pos.z);
+				vec = new THREE.Vector3(-pos.x,-pos.y,-pos.z);
 				distance = pos.dot(vec);
 				material.uniforms.uFar.value = [-vec.x,-vec.y,-vec.z,distance];
 
