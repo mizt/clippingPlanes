@@ -41,6 +41,7 @@
 			const material = new THREE.ShaderMaterial({
 				uniforms: {
 					uNear:[0,0,0,0],
+					uFar:[0,0,0,0]
 				},
 				vertexShader:`
 					varying vec2 vUv;
@@ -55,9 +56,11 @@
 					varying vec2 vUv;
 					varying vec3 vViewPosition;
 					uniform vec4 uNear;
+					uniform vec4 uFar;
 					void main() {
 						bool clipped = false;
 						if(dot(vViewPosition,uNear.xyz)>uNear.w) clipped = true;
+						if(dot(vViewPosition,uFar.xyz)<uFar.w) clipped = true;
 						if(clipped) {
 							discard;
 						}
@@ -101,16 +104,24 @@
 					renderer.setSize(window.innerWidth,window.innerHeight);
 				}
 				
-				let Z = -3.0+Math.cos(theta)*0.5;
-				
-				let pos = new THREE.Vector3(0,0,Z+0.25);
-				let viewMatrix = camera.matrixWorldInverse;
+				const z = -3.0+Math.cos(theta)*0.5;
+				const offset = 0.125;
+
+				const viewMatrix = camera.matrixWorldInverse;
+
+				let pos = new THREE.Vector3(0,0,z+offset);
 				pos.applyMatrix4(viewMatrix);
 				let vec = new THREE.Vector3(-pos.x,-pos.y,-pos.z);
 				let distance = pos.dot(vec);
 				material.uniforms.uNear.value = [-vec.x,-vec.y,-vec.z,distance];
 				
-				box.position.z = Z;
+				pos = new THREE.Vector3(0,0,z-offset);
+				pos.applyMatrix4(viewMatrix);
+				vec = new THREE.Vector3(-pos.x,-pos.y,pos.z);
+				distance = pos.dot(vec);
+				material.uniforms.uFar.value = [-vec.x,-vec.y,-vec.z,distance];
+
+				box.position.z = z;
 				box.rotation.y = theta*2.0;
 				box.rotation.x = theta*3.0;
 
