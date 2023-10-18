@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - clipping planes</title>
+		<title>clipping</title>
+		<link rel="icon" href="data:;base64,=">
 		<meta charset="utf-8">
+		<meta name="robots" content="noindex, nofollow">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
 			
@@ -33,12 +35,21 @@
 			import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 			// Clipping planes:
-			const localPlane = new THREE.Plane(new THREE.Vector3(0,1,0),1);
-			
-			const plane = new THREE.Mesh(
-				new THREE.PlaneGeometry(1.5,1.5),
-				new THREE.MeshBasicMaterial({color:0xFFFFFF,side:THREE.DoubleSide})
-			);
+			const localPlanes = [
+				new THREE.Plane(new THREE.Vector3( 0,-1,0),1),
+				new THREE.Plane(new THREE.Vector3( 0, 1,0),1)
+			];
+
+			const planes = [
+				new THREE.Mesh(
+					new THREE.PlaneGeometry(1.5,1.5),
+					new THREE.MeshBasicMaterial({color:0xFFFFFF,side:THREE.DoubleSide})
+				),
+				new THREE.Mesh(
+					new THREE.PlaneGeometry(1.5,1.5),
+					new THREE.MeshBasicMaterial({color:0xFFFFFF,side:THREE.DoubleSide})
+				)
+			];
 
 			const onWindowResize = ()=>{
 				camera.aspect = window.innerWidth/window.innerHeight;
@@ -53,18 +64,28 @@
 			// Lights
 			scene.add( new THREE.AmbientLight(0xFFFFFF ) );
 			
-			plane.position.copy(localPlane.normal);
-			plane.position.multiplyScalar(-localPlane.constant);
-			plane.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),localPlane.normal);
-			plane.material.opacity = 0.5;
-			plane.material.transparent = true;
-			scene.add( plane ); 
+			planes[0].position.copy(localPlanes[0].normal);
+			planes[0].position.multiplyScalar(-localPlanes[0].constant);
+			planes[0].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),localPlanes[0].normal);
+			planes[0].material.opacity = 0.5;
+			planes[0].material.transparent = true;
+			scene.add(planes[0]);
+			
+			planes[1].position.copy(localPlanes[1].normal);
+			planes[1].position.multiplyScalar(-localPlanes[1].constant);
+			planes[1].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),localPlanes[1].normal);
+			planes[1].material.opacity = 0.5;
+			planes[1].material.transparent = true;
+			scene.add(planes[1]);
 			
 			
 			// Geometry
 			const object = new THREE.Mesh( 
 				new THREE.TorusKnotGeometry(0.4,0.08,95,20),
-				new THREE.MeshBasicMaterial({color:0xFFFFFF,clippingPlanes:[localPlane]})
+				new THREE.MeshBasicMaterial({color:0xFFFFFF,clippingPlanes:[
+					localPlanes[0],
+					localPlanes[1]
+				]})
 			);
 			scene.add( object );
 			
@@ -91,27 +112,22 @@
 			controls.update();
 			
 			// GUI
-			const gui = new GUI(),
-			folderLocal = gui.addFolder("Local Clipping"),
-			propsLocal = {
-				get "Enabled" () {
-					return renderer.localClippingEnabled;
-				},
-				set "Enabled" (v) {
-					renderer.localClippingEnabled = v;
-				},
+			
+			let Plane = 0.0;
+			const gui = new GUI();
+			const propsLocal = {
 				get "Plane" () {
-					return localPlane.constant;
+					return Plane;
 				},
 				set "Plane" (v) {
-					localPlane.constant = v;
+					Plane = v;
+					localPlanes[0].constant = v-0.1;
+					localPlanes[1].constant = v+0.1
 				}
 			};
+			gui.add( propsLocal,"Plane",0.0,1.0,0.01);
 			propsLocal["Plane"] = 0.0;
-			
-			folderLocal.add( propsLocal,"Enabled");
-			folderLocal.add( propsLocal,"Plane",-1.0,1.0,0.01);
-			
+
 			// Start
 			const startTime = Date.now();
 			
@@ -123,9 +139,14 @@
 				object.rotation.x = time*1.0;
 				object.rotation.y = time*0.4;
 				
-				plane.position.copy(localPlane.normal);
-				plane.position.multiplyScalar(-localPlane.constant);
-				plane.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),localPlane.normal);
+				planes[0].position.copy(localPlanes[0].normal);
+				planes[0].position.multiplyScalar(-localPlanes[0].constant);
+				planes[0].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),localPlanes[0].normal);
+				
+				planes[1].position.copy(localPlanes[1].normal);
+				planes[1].position.multiplyScalar(-localPlanes[1].constant);
+				planes[1].quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),localPlanes[1].normal);
+				
 				
 				stats.begin();
 				renderer.render( scene, camera );
